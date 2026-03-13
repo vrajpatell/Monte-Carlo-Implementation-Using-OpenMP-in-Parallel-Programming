@@ -1,0 +1,11 @@
+services:
+  - type: web
+    name: monte-carlo-openmp-learning-portal
+    runtime: static
+    buildCommand: "echo 'No build required for static site'"
+    staticPublishPath: .
+    autoDeploy: true
+    routes:
+      - type: rewrite
+        source: /*
+        destination: /index.html

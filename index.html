@@ -1,0 +1,170 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Monte Carlo + OpenMP Learning Portal</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="styles.css" />
+</head>
+<body>
+  <header class="site-header">
+    <div class="container nav-wrap">
+      <a class="brand" href="#top">Monte Carlo + OpenMP</a>
+      <nav>
+        <a href="#concept">Concept</a>
+        <a href="#pi">Estimate π</a>
+        <a href="#parallel">Parallel</a>
+        <a href="#walkthrough">Walkthrough</a>
+        <a href="#run">Run</a>
+        <a href="#try">Try It</a>
+      </nav>
+    </div>
+  </header>
+
+  <main id="top">
+    <section class="hero container">
+      <p class="eyebrow">Beginner-Friendly Parallel Programming Project</p>
+      <h1>Estimate π with Monte Carlo Simulation and OpenMP</h1>
+      <p class="lead">Learn how random sampling works, why multithreading helps, and how to run this C/OpenMP project on your machine.</p>
+      <div class="hero-cta">
+        <a class="btn btn-primary" href="#concept">Learn the Concept</a>
+        <a class="btn" href="monte_carlo_lab1.c">View Code</a>
+        <a class="btn" href="#run">Run Locally</a>
+      </div>
+    </section>
+
+    <section id="concept" class="section container">
+      <h2>What is Monte Carlo Simulation?</h2>
+      <p>Monte Carlo simulation solves problems by using repeated random sampling. Instead of solving a complex equation directly, we run many random experiments and use the overall pattern to estimate the answer.</p>
+      <div class="grid-two">
+        <div>
+          <p>In this project, random points are thrown inside a square. Some points land inside a circle drawn inside that square. The ratio helps estimate π.</p>
+        </div>
+        <div class="visual-card" aria-label="square and circle concept visual">
+          <div class="square">
+            <div class="circle"></div>
+            <span class="dot in" style="left: 62%; top: 38%;"></span>
+            <span class="dot in" style="left: 48%; top: 49%;"></span>
+            <span class="dot out" style="left: 6%; top: 9%;"></span>
+            <span class="dot in" style="left: 71%; top: 54%;"></span>
+            <span class="dot out" style="left: 92%; top: 83%;"></span>
+          </div>
+          <p class="caption">Green dots: inside circle. Red dots: outside circle.</p>
+        </div>
+      </div>
+    </section>
+
+    <section id="pi" class="section section-alt container">
+      <h2>How This Project Estimates π</h2>
+      <p class="formula">π ≈ 4 × (points inside circle / total points)</p>
+      <ol>
+        <li>Generate a random point <code>(x, y)</code> between -1 and 1.</li>
+        <li>Test whether <code>x² + y² ≤ 1</code> (inside unit circle).</li>
+        <li>Repeat for many tosses.</li>
+        <li>Use the fraction of inside points to estimate π.</li>
+      </ol>
+      <div class="pill-row">
+        <span class="pill">Unit circle area = π</span>
+        <span class="pill">Square area = 4</span>
+        <span class="pill">So fraction ≈ π/4</span>
+      </div>
+    </section>
+
+    <section id="parallel" class="section container">
+      <h2>Sequential vs Parallel Programming</h2>
+      <table>
+        <thead>
+          <tr>
+            <th>Approach</th>
+            <th>How It Works</th>
+            <th>Typical Outcome</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td>Sequential</td>
+            <td>One thread performs all tosses one by one.</td>
+            <td>Simple but slower for very large toss counts.</td>
+          </tr>
+          <tr>
+            <td>Parallel (OpenMP)</td>
+            <td>Multiple threads split tosses and combine totals.</td>
+            <td>Often faster, especially on multi-core CPUs.</td>
+          </tr>
+        </tbody>
+      </table>
+      <p class="note">For Monte Carlo tosses, each toss is independent. That makes this problem a strong candidate for parallel work sharing.</p>
+    </section>
+
+    <section id="openmp" class="section section-alt container">
+      <h2>How OpenMP Works Here</h2>
+      <p><strong>Plain English:</strong> OpenMP allows the program to split tosses across CPU threads so many tosses are processed at the same time.</p>
+      <ul>
+        <li><strong>Threads:</strong> A team of workers is created.</li>
+        <li><strong>Work sharing:</strong> Toss loop iterations are divided across workers.</li>
+        <li><strong>Reduction:</strong> Each worker keeps a local count, then counts are safely summed.</li>
+      </ul>
+      <p><strong>Technical note:</strong> The parallel function uses <code>#pragma omp parallel</code> and <code>#pragma omp for reduction(+: no_in_circle)</code> to avoid race conditions while aggregating results.</p>
+    </section>
+
+    <section id="walkthrough" class="section container">
+      <h2>Code Walkthrough</h2>
+      <div class="cards">
+        <article class="card"><h3>Random Number Generation</h3><p><code>getRand()</code> uses thread-safe <code>rand_r</code> with per-thread seeds to produce values in [-1, 1].</p></article>
+        <article class="card"><h3>Inside Circle Test</h3><p>Each toss computes <code>x*x + y*y</code>; values ≤ 1 count as “inside”.</p></article>
+        <article class="card"><h3>Sequential Function</h3><p><code>Calculate_Pi_Sequential</code> loops through all tosses on a single thread.</p></article>
+        <article class="card"><h3>Parallel Function</h3><p><code>Calculate_Pi_Parallel</code> splits tosses across threads and combines results via reduction.</p></article>
+        <article class="card"><h3>Timing</h3><p><code>gettimeofday</code> measures elapsed seconds for sequential and parallel runs.</p></article>
+      </div>
+    </section>
+
+    <section id="run" class="section section-alt container">
+      <h2>How to Compile and Run</h2>
+      <p>Use GCC with OpenMP support:</p>
+      <pre><code>gcc -fopenmp monte_carlo_lab1.c -o monte_carlo
+./monte_carlo</code></pre>
+      <p class="note">Tip: On some systems you may need to install GCC separately if your default compiler does not support OpenMP.</p>
+    </section>
+
+    <section class="section container">
+      <h2>Why Parallel Programming Matters</h2>
+      <ul>
+        <li>Data analysis pipelines processing millions of records.</li>
+        <li>Scientific simulations in physics, chemistry, and climate modeling.</li>
+        <li>Financial risk modeling using repeated scenario sampling.</li>
+        <li>Image/video processing workloads with per-pixel or per-frame tasks.</li>
+      </ul>
+    </section>
+
+    <section id="try" class="section section-alt container">
+      <h2>Try It Yourself (Browser Simulator)</h2>
+      <p>This mini simulator runs directly in your browser to demonstrate the Monte Carlo idea conceptually.</p>
+      <div class="sim-controls">
+        <label for="tosses">Number of tosses: <span id="tossesValue">500</span></label>
+        <input id="tosses" type="range" min="100" max="10000" step="100" value="500" />
+        <button id="simulateBtn" class="btn btn-primary">Run Simulation</button>
+      </div>
+      <div class="sim-grid">
+        <canvas id="simCanvas" width="420" height="420" aria-label="monte carlo simulator"></canvas>
+        <div class="sim-results">
+          <p><strong>Total points:</strong> <span id="totalPoints">0</span></p>
+          <p><strong>Inside circle:</strong> <span id="insidePoints">0</span></p>
+          <p><strong>Estimated π:</strong> <span id="piEstimate">0.000000</span></p>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <footer class="site-footer">
+    <div class="container footer-wrap">
+      <p><a href="https://github.com" target="_blank" rel="noreferrer">GitHub Repository</a></p>
+      <p class="muted">Educational demo only: values and timing can vary by run and hardware.</p>
+    </div>
+  </footer>
+
+  <script src="script.js"></script>
+</body>
+</html>
